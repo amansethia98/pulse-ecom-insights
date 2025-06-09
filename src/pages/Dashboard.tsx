@@ -1,11 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { useSession, getSession } from 'next-auth/react';
-import { GetServerSideProps } from 'next';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import FilterBar from '../components/FilterBar';
 import TrendTable from '../components/TrendTable';
-import { useRouter } from 'next/router';
 
 interface DashboardData {
   restaurants: string[];
@@ -14,8 +13,8 @@ interface DashboardData {
 }
 
 const Dashboard = () => {
-  const { data: session } = useSession();
-  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('sales');
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -29,19 +28,26 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    fetchDashboardData();
-  }, [session]);
+    if (!authLoading && !user) {
+      navigate('/login');
+    } else if (user) {
+      fetchDashboardData();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/dashboard-data');
-      const data = await response.json();
-      setDashboardData(data);
+      // For now, we'll use mock data since we don't have a backend
+      const mockData = {
+        restaurants: user?.role === 'admin' ? ['Restaurant A', 'Restaurant B'] : [user?.restaurant || ''],
+        branches: ['Branch 1', 'Branch 2', 'Branch 3'],
+        data: []
+      };
+      setDashboardData(mockData);
       
-      // Set default restaurant if user has access to only one
-      if (data.restaurants.length === 1) {
-        setFilters(prev => ({ ...prev, restaurant: data.restaurants[0] }));
+      if (mockData.restaurants.length === 1) {
+        setFilters(prev => ({ ...prev, restaurant: mockData.restaurants[0] }));
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -54,15 +60,21 @@ const Dashboard = () => {
     setFilters(newFilters);
   };
 
-  if (!session) {
-    router.push('/login');
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
     return null;
   }
 
   return (
     <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
       <div className="space-y-6">
-        {/* Filter Bar */}
         <FilterBar
           filters={filters}
           onFilterChange={handleFilterChange}
@@ -71,7 +83,6 @@ const Dashboard = () => {
           loading={loading}
         />
 
-        {/* Main Content */}
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
@@ -91,25 +102,6 @@ const Dashboard = () => {
       </div>
     </Layout>
   );
-};
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const session = await getSession(context);
-  
-  if (!session) {
-    return {
-      redirect: {
-        destination: '/login',
-        permanent: false,
-      },
-    };
-  }
-
-  return {
-    props: {
-      session,
-    },
-  };
 };
 
 export default Dashboard;
