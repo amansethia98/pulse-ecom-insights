@@ -62,8 +62,11 @@ const Dashboard = () => {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-transparent border-t-cyan-400 border-r-purple-400 rounded-full animate-spin"></div>
+          <div className="absolute inset-0 w-16 h-16 border-4 border-transparent border-b-pink-400 border-l-blue-400 rounded-full animate-spin animate-reverse"></div>
+        </div>
       </div>
     );
   }
@@ -73,34 +76,39 @@ const Dashboard = () => {
   }
 
   return (
-    <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
-      <div className="space-y-6">
-        <FilterBar
-          filters={filters}
-          onFilterChange={handleFilterChange}
-          restaurants={dashboardData?.restaurants || []}
-          branches={dashboardData?.branches || []}
-          loading={loading}
-        />
-
-        {loading ? (
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-sky-600"></div>
-            <span className="ml-3 text-gray-600">Loading data...</span>
-          </div>
-        ) : dashboardData ? (
-          <TrendTable 
-            data={dashboardData.data} 
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+      <Layout activeTab={activeTab} setActiveTab={setActiveTab}>
+        <div className="space-y-8 p-6">
+          <FilterBar
             filters={filters}
-            activeTab={activeTab}
+            onFilterChange={handleFilterChange}
+            restaurants={dashboardData?.restaurants || []}
+            branches={dashboardData?.branches || []}
+            loading={loading}
           />
-        ) : (
-          <div className="text-center py-12">
-            <div className="text-gray-500">No data available</div>
-          </div>
-        )}
-      </div>
-    </Layout>
+
+          {loading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-transparent border-t-cyan-400 border-r-purple-400 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 w-12 h-12 border-4 border-transparent border-b-pink-400 border-l-blue-400 rounded-full animate-spin animate-reverse"></div>
+              </div>
+              <span className="ml-4 text-slate-300 font-medium">Loading data...</span>
+            </div>
+          ) : dashboardData ? (
+            <TrendTable 
+              data={dashboardData.data} 
+              filters={filters}
+              activeTab={activeTab}
+            />
+          ) : (
+            <div className="text-center py-16">
+              <div className="text-slate-400 text-lg font-medium">No data available</div>
+            </div>
+          )}
+        </div>
+      </Layout>
+    </div>
   );
 };
 
